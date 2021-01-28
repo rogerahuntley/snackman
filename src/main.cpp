@@ -4,9 +4,6 @@
 #include <iostream>
 
 #include "tilemap.h"
-#include "ecpps.h"
-
-using namespace ecpps;
 
 SDL_Texture* loadTexture(SDL_Renderer* renderer, string fileName){
     SDL_Texture* texture = IMG_LoadTexture(renderer, ("res/" + fileName).c_str());
@@ -21,6 +18,10 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, string fileName){
 
 int main(int argv, char** args)
 {
+    SDL_Window* window = SDL_CreateWindow("Hello SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_Texture* roadTexture = loadTexture(renderer, "roadsheet.png");
+
     Scene mainScene;
 
     Entity& tileMap = mainScene.createEntity();
@@ -29,6 +30,7 @@ int main(int argv, char** args)
     mapData.fileName = "map.dat";
 
     TileMapRenderComponent mapRenderer;
+    mapRenderer.roadTexture = roadTexture;
     
     tileMap.addComponent(mapData);
     tileMap.addComponent(mapRenderer);
@@ -36,12 +38,7 @@ int main(int argv, char** args)
     mainScene.registerSystem<TileMapDataSystem>();
     mainScene.registerSystem<TileMapRenderSystem>();
 
-    SDL_Window* window = SDL_CreateWindow("Hello SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
 
-    SDL_Texture* roadTexture = loadTexture(renderer, "roadsheet.png");
-
-    TileMap mainMap("map.dat", roadTexture);
 
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
@@ -73,7 +70,7 @@ int main(int argv, char** args)
         SDL_RenderClear(renderer);
 
         // RENDER
-        mainScene.render();
+        mainScene.render(renderer);
 
         SDL_RenderPresent(renderer);
     }
