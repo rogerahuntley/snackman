@@ -1,17 +1,50 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+
 #include <iostream>
 
-#include "map.h"
+#include "tilemap.h"
+#include "ecpps.h"
+
+using namespace ecpps;
+
+SDL_Texture* loadTexture(SDL_Renderer* renderer, string fileName){
+    SDL_Texture* texture = IMG_LoadTexture(renderer, ("res/" + fileName).c_str());
+        if( texture == NULL )
+    {
+        printf( "Failed to load texture image!\n" );
+        printf(("res/" + fileName).c_str());
+        printf( IMG_GetError());
+    }
+    return texture;
+}
 
 int main(int argv, char** args)
 {
-    Map mainMap("map.dat");
+    Scene mainScene;
 
-    SDL_Init(SDL_INIT_EVERYTHING);
+    Entity& tileMap = mainScene.createEntity();
 
-    SDL_Window *window = SDL_CreateWindow("Hello SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+    TileMapDataComponent mapData;
+    mapData.fileName = "map.dat";
+
+    TileMapRenderComponent mapRenderer;
+    
+    tileMap.addComponent(mapData);
+    tileMap.addComponent(mapRenderer);
+
+    mainScene.registerSystem<TileMapDataSystem>();
+    mainScene.registerSystem<TileMapRenderSystem>();
+
+    SDL_Window* window = SDL_CreateWindow("Hello SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+
+    SDL_Texture* roadTexture = loadTexture(renderer, "roadsheet.png");
+
+    TileMap mainMap("map.dat", roadTexture);
+
+    SDL_Init(SDL_INIT_VIDEO);
+    IMG_Init(IMG_INIT_PNG);
 
     bool isRunning = true;
     SDL_Event event;
@@ -34,12 +67,18 @@ int main(int argv, char** args)
             }
         }
 
+        // UPDATE
+        mainScene.update();
+
         SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+        // RENDER
+        mainScene.render();
 
         SDL_RenderPresent(renderer);
     }
 
+    SDL_DestroyTexture(roadTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

@@ -11,12 +11,14 @@
                 "-o",
                 "build\\game.exe",
                 "-ID:\\Documents\\#Programming\\lib\\SDL2-2.0.14\\x86_64-w64-mingw32\\include",
+                "-Iecpps",
                 "-LD:\\Documents\\#Programming\\lib\\SDL2-2.0.14\\x86_64-w64-mingw32\\lib",
                 "-static-libgcc", "-static-libstdc++",
                 "-lmingw32",
                 "-lSDL2main",
                 "-lSDL2",
                 "-lSDL2_image",
+                "-std=c++17",
                 //"-mwindows"
             ],
             "options": {
