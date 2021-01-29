@@ -25,7 +25,7 @@ int main(int argv, char** args)
 
     // instantiate main scene
     Scene mainScene;
-
+    
     // register systems
     mainScene.registerSystem<TileMapDataSystem>();
     mainScene.registerSystem<TileMapRenderSystem>();
@@ -47,7 +47,7 @@ int main(int argv, char** args)
     // instantiate tilemap renderer component
     TileMapRenderComponent mapRenderer;
     mapRenderer.roadTexture = roadTexture;
-    
+
     // add components to entity
     tileMap.addComponent(mapData);
     tileMap.addComponent(mapRenderer);
@@ -76,12 +76,15 @@ int main(int argv, char** args)
             }
         }
 
-        // UPDATE
+        // INIT NEW COMPONENTS
+        mainScene.init();
+
+        // UPDATE COMPONENTS
         mainScene.update();
 
         SDL_RenderClear(renderer);
 
-        // RENDER
+        // RENDER COMPONENTS
         mainScene.render();
 
         SDL_RenderPresent(renderer);
