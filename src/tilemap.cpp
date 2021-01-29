@@ -14,7 +14,8 @@ using std::set;
 using std::ifstream;
 
 #include "tilemap.h"
-#include "ecpps.h"
+#include "sdlecs.h"
+#include "ecpps/ecpps.h"
 
 using namespace ecpps;
 
@@ -88,14 +89,16 @@ void TileMapRenderSystem::init(ECSManager* manager){
     manager->groupEntities<TileMapRenderComponent>();
 }
 
-void TileMapRenderSystem::render(SDL_Renderer* renderer, ECSManager* manager){
+void TileMapRenderSystem::render(ECSManager* manager){
     // get set of entities
     set<ID>& entities = manager->getComponentEntities<TileMapRenderComponent>();
     // for each entity in set
     for(ID entityID : entities){
         // get relevant component
         TileMapRenderComponent& roadRender = manager->getComponent<TileMapRenderComponent>(entityID);
+        // get renderer
+        SDLRendererComponent& renderer = manager->getComponent<SDLRendererComponent>();
         // render
-        SDL_RenderCopy( renderer, roadRender.roadTexture, NULL, NULL);
+        SDL_RenderCopy( renderer.renderer, roadRender.roadTexture, NULL, NULL);
     }
 }

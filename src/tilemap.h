@@ -1,11 +1,16 @@
+
+// all stuff relating to tilemaps
+// these are tile-based drawable grids of images
+
 #ifndef MAP_H
 #define MAP_H
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <string>
 #include <vector>
 
-#include "ecpps.h"
+#include "ecpps/ecpps.h"
 
 using std::string;
 using std::vector;
@@ -35,7 +40,7 @@ struct TileMapDataComponent: public Component {
 class TileMapRenderSystem: public RenderSystem {
     public:
         void init(ECSManager* manager) override;
-        void render(SDL_Renderer* renderer, ECSManager* manager) override;
+        void render(ECSManager* manager) override;
 };
 
 struct TileMapRenderComponent: public RenderComponent {

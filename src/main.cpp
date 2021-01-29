@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "tilemap.h"
+#include "sdlecs.h"
 
 SDL_Texture* loadTexture(SDL_Renderer* renderer, string fileName){
     SDL_Texture* texture = IMG_LoadTexture(renderer, ("res/" + fileName).c_str());
@@ -15,30 +16,41 @@ SDL_Texture* loadTexture(SDL_Renderer* renderer, string fileName){
     }
     return texture;
 }
-
 int main(int argv, char** args)
 {
-    SDL_Window* window = SDL_CreateWindow("Hello SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+    // init SDL
+    SDL_Window* window = SDL_CreateWindow("Snackman early dev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_Texture* roadTexture = loadTexture(renderer, "roadsheet.png");
 
+    // instantiate main scene
     Scene mainScene;
 
-    Entity& tileMap = mainScene.createEntity();
-
-    TileMapDataComponent mapData;
-    mapData.fileName = "map.dat";
-
-    TileMapRenderComponent mapRenderer;
-    mapRenderer.roadTexture = roadTexture;
-    
-    tileMap.addComponent(mapData);
-    tileMap.addComponent(mapRenderer);
-
+    // register systems
     mainScene.registerSystem<TileMapDataSystem>();
     mainScene.registerSystem<TileMapRenderSystem>();
 
+    // instantiate render component
+    SDLRendererComponent renderComponent;
+    renderComponent.renderer = renderer;
 
+    // add render component to main scene
+    mainScene.addComponent(renderComponent);
+
+    // create new tilemap entity
+    Entity& tileMap = mainScene.createEntity();
+
+    // instantiate tilemap data component
+    TileMapDataComponent mapData;
+    mapData.fileName = "map.dat";
+
+    // instantiate tilemap renderer component
+    TileMapRenderComponent mapRenderer;
+    mapRenderer.roadTexture = roadTexture;
+    
+    // add components to entity
+    tileMap.addComponent(mapData);
+    tileMap.addComponent(mapRenderer);
 
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
@@ -70,11 +82,12 @@ int main(int argv, char** args)
         SDL_RenderClear(renderer);
 
         // RENDER
-        mainScene.render(renderer);
+        mainScene.render();
 
         SDL_RenderPresent(renderer);
     }
 
+    // quit
     SDL_DestroyTexture(roadTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
