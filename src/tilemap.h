@@ -1,16 +1,18 @@
-
-// all stuff relating to tilemaps
-// these are tile-based drawable grids of images
-
 #ifndef MAP_H
 #define MAP_H
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <tmx.h>
+
 #include <string>
 #include <vector>
 
+#include "sdlecs.h"
 #include "ecpps/ecpps.h"
+
+// all stuff relating to tilemaps
+// these are tile-based drawable grids of images
 
 using std::string;
 using std::vector;
@@ -28,9 +30,9 @@ class TileMapDataSystem: public System {
 
 struct TileMapDataComponent: public Component {
         // holds the name of the file from which to load tilemap data
-        string fileName;
+        string tmxFile;
         // holds 2d vector of ints to represent the tilemap
-        vector<vector<int>> mapData;
+        tmx_map* mapData;
         // number of tiles tall
         unsigned int height;
         // number of tiles wide
@@ -41,6 +43,12 @@ class TileMapRenderSystem: public RenderSystem {
     public:
         void init(ECSManager* manager) override;
         void render(ECSManager* manager) override;
+    private:
+        void drawAllLayers(SDLRendererComponent& ren, tmx_map *map, tmx_layer *layer);
+        void draw_layer(SDLRendererComponent& ren, tmx_map *map, tmx_layer *layer);
+        void draw_tile(SDLRendererComponent& ren, SDL_Texture* image, unsigned int sx, unsigned int sy, unsigned int sw, unsigned int sh,
+               unsigned int dx, unsigned int dy, float opacity, unsigned int flags);
+
 };
 
 struct TileMapRenderComponent: public RenderComponent {

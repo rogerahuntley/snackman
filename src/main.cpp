@@ -6,29 +6,28 @@
 #include "tilemap.h"
 #include "sdlecs.h"
 
-SDL_Texture* loadTexture(SDL_Renderer* renderer, string fileName){
-    SDL_Texture* texture = IMG_LoadTexture(renderer, ("res/" + fileName).c_str());
-        if( texture == NULL )
-    {
-        printf( "Failed to load texture image!\n" );
-        printf(("res/" + fileName).c_str());
-        printf( IMG_GetError());
-    }
-    return texture;
-}
+// main file ayy
+// this is a lib / framework for learning c++ and making games
+// all code (except linked libraries) was all written by:
+
+// --------- ROGER HUNTLEY II --------- //
+// ----- roger.a.huntley@gmail.com ---- //
+// ----------- @rogerthat52 ----------- //
+// -------------- A.K.A. -------------- //
+// ----------- @YoungsDitch ----------- //
+
 int main(int argv, char** args)
 {
+    double currentTime = SDL_GetTicks();
+    double lastTime = currentTime;
+    double deltaTime;
+
     // init SDL
-    SDL_Window* window = SDL_CreateWindow("Snackman early dev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+    SDL_Window* window = SDL_CreateWindow("Snackman early dev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 480, 272, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
-    SDL_Texture* roadTexture = loadTexture(renderer, "roadsheet.png");
 
     // instantiate main scene
     Scene mainScene;
-    
-    // register systems
-    mainScene.registerSystem<TileMapDataSystem>();
-    mainScene.registerSystem<TileMapRenderSystem>();
 
     // instantiate render component
     SDLRendererComponent renderComponent;
@@ -42,18 +41,21 @@ int main(int argv, char** args)
 
     // instantiate tilemap data component
     TileMapDataComponent mapData;
-    mapData.fileName = "map.dat";
+    mapData.tmxFile = "res/map1.tmx";
 
     // instantiate tilemap renderer component
     TileMapRenderComponent mapRenderer;
-    mapRenderer.roadTexture = roadTexture;
+    //mapRenderer.roadTexture = roadTexture;
 
-    // add components to entity
-    tileMap.addComponent(mapData);
     tileMap.addComponent(mapRenderer);
+    tileMap.addComponent(mapData);
 
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
+    
+    // register systems
+    mainScene.registerSystem<TileMapDataSystem>();
+    mainScene.registerSystem<TileMapRenderSystem>();
 
     bool isRunning = true;
     SDL_Event event;
@@ -88,10 +90,15 @@ int main(int argv, char** args)
         mainScene.render();
 
         SDL_RenderPresent(renderer);
+
+        // get delta time
+        double currentTime = SDL_GetTicks();
+        double deltaTime = (currentTime - lastTime) / 1000.0f;
+        double lastTime = currentTime;
     }
 
     // quit
-    SDL_DestroyTexture(roadTexture);
+    //SDL_DestroyTexture(roadTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
