@@ -22,118 +22,154 @@ using namespace ecpps;
 
 // ------- TileMapDataSystem ------- //
 
+typedef TileMapRenderSystem TMRenderSystem;
+typedef TileMapDataSystem TMDataSystem;
+typedef TileMapRenderComponent TMRenderComp;
+typedef TileMapDataComponent TMDataComp;
+
+
 // a good example
 // init loop for tilemapdata
-void TileMapDataSystem::init(ECSManager* manager){
-    // get set of entities
-    set<ID>& entities = manager->getNewComponentEntities<TileMapDataComponent>();
-    // for each entity in set
-    for(ID entityID : entities){
-        // get relevant component
-        TileMapDataComponent& tileMap = manager->getComponent<TileMapDataComponent>(entityID);
-        // load map
-        loadMap(tileMap);
-    }
-    // release init components into regular pools
-    manager->groupEntities<TileMapDataSystem>();
+void TMDataSystem::init(ECSManager* manager){
+  // get set of entities
+  set<ID>& entities = manager->getNewComponentEntities<TMDataComp>();
+  // for each entity in set
+  for(ID entityID : entities){
+    // get relevant component
+    TMDataComp& tileMap = manager->getComponent<TMDataComp>(entityID);
+    // load map
+    loadMap(tileMap);
+  }
+  // release init components into regular pools
+  manager->groupEntities<TMDataSystem>();
 }
 
 // loads tile data from a file
-void TileMapDataSystem::loadMap(TileMapDataComponent& component){
-  
+void TMDataSystem::loadMap(TMDataComp& component){
+  // load data using tmx lib
 	component.mapData = tmx_load(component.tmxFile.c_str());
 }
 
-// ------- MapRenderer ------- //
+// ------- TileMapRenderSystem ------- //
 
-void TileMapRenderSystem::init(ECSManager* manager){
-    manager->groupEntities<TileMapRenderComponent>();
+void TMRenderSystem::init(ECSManager* manager){
+  // tell manager that these components are ready
+  manager->groupEntities<TMRenderComp>();
 }
 
-void TileMapRenderSystem::render(ECSManager* manager){
-    // get set of entities
-    set<ID>& oentities = manager->getNewComponentEntities<TileMapRenderComponent>();
-    set<ID>& entities = manager->getComponentEntities<TileMapRenderComponent>();
-    // for each entity in set
-    for(ID entityID : entities){
-        // get relevant component
-        TileMapRenderComponent& mapRender = manager->getComponent<TileMapRenderComponent>(entityID);
-        TileMapDataComponent& mapData = manager->getComponent<TileMapDataComponent>(entityID);
-        // get renderer
-        SDLRendererComponent& renderer = manager->getComponent<SDLRendererComponent>();
-        // render
-        drawAllLayers(renderer, mapData.mapData, mapData.mapData->ly_head);
-    }
+void TMRenderSystem::render(ECSManager* manager){
+  // get set of entities
+  set<ID>& entities = manager->getComponentEntities<TMRenderComp>();
+  // get renderer
+  SDLRendererComponent& renderer = manager->getComponent<SDLRendererComponent>();
+  // for each entity in set
+  for(ID entityID : entities){
+    // get relevant components
+    TMRenderComp& mapRender = manager->getComponent<TMRenderComp>(entityID);
+    TMDataComp& mapData = manager->getComponent<TMDataComp>(entityID);
+    // render
+    drawAllLayers(renderer, mapData, mapRender, mapData.mapData->ly_head);
+  }
 }
 
-void TileMapRenderSystem::drawAllLayers(SDLRendererComponent& ren, tmx_map *map, tmx_layer *layers) {
+void TMRenderSystem::drawAllLayers(SDLRendererComponent& ren, TMDataComp& mapData, TMRenderComp& mapRender, tmx_layer *layers) {
+  // for every later
   while (layers) {
     if (layers->visible) {
-
+      // draw collection of layers (recursive)
       if (layers->type == L_GROUP) {
-        drawAllLayers(ren, map, layers->content.group_head); // recursive call
+        drawAllLayers(ren, mapData, mapRender, layers->content.group_head);
       }
       else if (layers->type == L_OBJGR) {
-        //draw_objects(layers->content.objgr); // Function to be implemented
+        //draw_objects(layers->content.objgr);
       }
       else if (layers->type == L_IMAGE) {
-        //draw_image_layer(layers->content.image); // Function to be implemented
+        //draw_image_layer(layers->content.image);
       }
       else if (layers->type == L_LAYER) {
-        draw_layer(ren, map, layers); // Function to be implemented
+        drawLayer(ren, mapData, mapRender, layers);
       }
     }
-    layers = layers->next;
+  // pass to next later
+  layers = layers->next;
   }
+}
 
+void TMRenderSystem::drawLayer(SDLRendererComponent& ren, TMDataComp& mapData, TMRenderComp& mapRender, tmx_layer* layer){
+  SDL_Texture* texture;
+  // check if entry exists
+  if(mapRender.baseLayers.find(layer->id) != mapRender.baseLayers.end()){
+    //if so, pull from entry
+    texture = mapRender.baseLayers.at(layer->id);
+  } else {
+    // else, create entry
+    // start with texture
+    texture = SDL_CreateTexture(ren.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 480, 272);
+    // send blend mode for transparent
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+    // set alpha
+    SDL_SetTextureAlphaMod(texture, 255);
+    // set proper target
+    SDL_SetRenderTarget(ren.renderer, texture);
+    // set color to white
+	  //SDL_SetRenderDrawColor(ren.renderer, 255, 255, 255, 255);
+    // clear
+    SDL_RenderClear(ren.renderer);
+    // draw
+    drawLayerBase(ren, mapData, mapRender, layer);
+    // set regular target
+    SDL_SetRenderTarget(ren.renderer, NULL);
+    // add to map
+    mapRender.baseLayers.insert({layer->id, texture});
+  }
+  // draw texture
+	SDL_RenderCopy(ren.renderer, texture, NULL, NULL);
 }
 
 // returns tile at specific position on map
-void TileMapRenderSystem::draw_layer(SDLRendererComponent& ren, tmx_map *map, tmx_layer *layer) {
+void TMRenderSystem::drawLayerBase(SDLRendererComponent& ren, TMDataComp& mapData, TMRenderComp& mapRender, tmx_layer* layer) {
+  // string for outputting to console (remove later)
   string cout;
-  unsigned long i, j;
-  unsigned int gid, x, y, w, h, flags;
+  // ayy
+  tmx_map* map = mapData.mapData;
+  
+  unsigned int x, y;
+  unsigned int gid, sx, sy, w, h, flags;
   float op;
-  tmx_tileset *ts;
-  tmx_image *im;
-  void* image;
+  tmx_tileset* tileset;
+  SDL_Texture* image;
   op = layer->opacity;
-  for (i=0; i<map->height; i++) {
-    for (j=0; j<map->width; j++) {
-      gid = (layer->content.gids[(i*map->width)+j]) & TMX_FLIP_BITS_REMOVAL;
+
+  // loop through all map tiles
+  for (x=0; x<map->height; x++) {
+    for (y=0; y<map->width; y++) {
+      // get tile gid
+      gid = (layer->content.gids[(x*map->width)+y]) & TMX_FLIP_BITS_REMOVAL;
+      // if tile is valid
       if (map->tiles[gid] != NULL) {
+        // get title id for printing
         unsigned id = map->tiles[gid]->id;
-        if(j == 0){
-          
-          cout += "\n";
-        }
-        if(id == 0){
-          cout += "##";
-        } else {
-          cout += "  ";
-        }
-				ts = map->tiles[gid]->tileset;
-				im = map->tiles[gid]->image;
-				x  = map->tiles[gid]->ul_x;
-				y  = map->tiles[gid]->ul_y;
-				w  = ts->tile_width;
-				h  = ts->tile_height;
-        SDL_Texture* image2 = ren.loadTexture(ts->image->source);
-				if (im) {
-					image = im->resource_image;
-				}
-				else {
-					image = ts->image->resource_image;
-				}
-        flags = (layer->content.gids[(i*map->width)+j]) & ~TMX_FLIP_BITS_REMOVAL;
-        draw_tile(ren, image2, x, y, w, h, j*ts->tile_width, i*ts->tile_height, op, flags);
+        if(y == 0){ cout += "\n"; } // remove later
+        if(id == 0){  cout += "##"; } else { cout += "  "; } // remove later
+
+        // pull data for tile
+        tileset = map->tiles[gid]->tileset;
+        image = ren.loadTexture(tileset->image->source);
+        sx  = map->tiles[gid]->ul_x;
+        sy  = map->tiles[gid]->ul_y;
+        w  = tileset->tile_width;
+        h  = tileset->tile_height;
+
+        // draw tile
+        drawTile(ren, image, sx, sy, w, h, y*tileset->tile_width, x*tileset->tile_height, op, gid);
       }
     }
   }
   std::cout << cout << std::endl;
+  SDL_Delay(100);
 }
 
-void TileMapRenderSystem::draw_tile(SDLRendererComponent& ren, SDL_Texture* image, unsigned int sx, unsigned int sy, unsigned int sw, unsigned int sh,
+void TMRenderSystem::drawTile(SDLRendererComponent& ren, SDL_Texture* image, unsigned int sx, unsigned int sy, unsigned int sw, unsigned int sh,
                unsigned int dx, unsigned int dy, float opacity, unsigned int flags) {
 	SDL_Rect src_rect, dest_rect;
 	src_rect.x = sx;

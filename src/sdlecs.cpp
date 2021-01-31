@@ -11,10 +11,6 @@ using std::string;
 
 #include "sdlecs.h"
 
-SDLRendererComponent& Scene::getRenderer(){
-    return renderer;
-};
-
 SDL_Texture* SDLRendererComponent::loadTexture(string fileName){
     // get texture pointer ready
     SDL_Texture* texture;
@@ -54,4 +50,21 @@ void SDLRendererComponent::destroyTexture(string& fileName){
     SDL_DestroyTexture(texture);
     // remove reference from map
     textures.erase(fileName);
+}
+
+// ------- Scene ------- //
+
+SDLRendererComponent& Scene::getRenderer(){
+    return renderer;
+};
+
+void Scene::render(){
+    // get renderer
+    SDLRendererComponent& renderer = getComponent<SDLRendererComponent>();
+    // clear renderer
+    SDL_RenderClear(renderer.renderer);
+    // render all render systems
+    ECSManager::render();
+    // send it boii
+    SDL_RenderPresent(renderer.renderer);
 }

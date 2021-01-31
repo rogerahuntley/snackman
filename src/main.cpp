@@ -24,7 +24,8 @@ int main(int argv, char** args)
 
     // init SDL
     SDL_Window* window = SDL_CreateWindow("Snackman early dev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 480, 272, 0);
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     // instantiate main scene
     Scene mainScene;
@@ -45,17 +46,18 @@ int main(int argv, char** args)
 
     // instantiate tilemap renderer component
     TileMapRenderComponent mapRenderer;
-    //mapRenderer.roadTexture = roadTexture;
 
+    // add components to tilemap
     tileMap.addComponent(mapRenderer);
     tileMap.addComponent(mapData);
 
-    SDL_Init(SDL_INIT_VIDEO);
-    IMG_Init(IMG_INIT_PNG);
-    
+
     // register systems
     mainScene.registerSystem<TileMapDataSystem>();
     mainScene.registerSystem<TileMapRenderSystem>();
+
+    SDL_Init(SDL_INIT_VIDEO);
+    IMG_Init(IMG_INIT_PNG);
 
     bool isRunning = true;
     SDL_Event event;
@@ -84,12 +86,8 @@ int main(int argv, char** args)
         // UPDATE COMPONENTS
         mainScene.update();
 
-        SDL_RenderClear(renderer);
-
         // RENDER COMPONENTS
         mainScene.render();
-
-        SDL_RenderPresent(renderer);
 
         // get delta time
         double currentTime = SDL_GetTicks();
@@ -98,7 +96,6 @@ int main(int argv, char** args)
     }
 
     // quit
-    //SDL_DestroyTexture(roadTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

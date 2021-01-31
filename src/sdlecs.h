@@ -38,6 +38,7 @@ class Scene: public ECSManager {
         SDLRendererComponent renderer;
     public:
         SDLRendererComponent& getRenderer();
+        void render() override;
 };
 
 #endif // SDLECS_H
