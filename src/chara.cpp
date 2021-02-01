@@ -33,6 +33,8 @@ void PacmanEntity::init(){
 void CharacterControlSystem::update(ECSManager* manager){
     // get set of entities
     set<ID>& entities = manager->getComponentEntities<CharacterComponent>();
+    // get event component
+    SDLEventComponent& event = manager->getComponent<SDLEventComponent>();
     // for each entity in set
     for(ID entityID : entities){
         // get relevant components
@@ -40,11 +42,11 @@ void CharacterControlSystem::update(ECSManager* manager){
         ScaleComponent& scale = manager->getComponent<ScaleComponent>(entityID);
         RotationComponent& rot = manager->getComponent<RotationComponent>(entityID);
         // render
-        moveCharacter(pos, scale, rot);
+        moveCharacter(event, pos, scale, rot);
     }
 };
 
-void CharacterControlSystem::moveCharacter(PositionComponent& pos, ScaleComponent& scale, RotationComponent& rot){
+void CharacterControlSystem::moveCharacter(SDLEventComponent event, PositionComponent& pos, ScaleComponent& scale, RotationComponent& rot){
     pos.x += .01;
     pos.y += .001;
 };

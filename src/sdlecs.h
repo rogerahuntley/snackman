@@ -17,21 +17,36 @@ using std::map;
 
 using namespace ecpps;
 
+// ------- Components ------- //
+
+struct RenderTextureComponent : public RenderComponent {
+    SDL_Texture* renderTexture;
+};
+
 struct SDLRendererComponent: public RenderComponent {
     private:
         SDL_Texture* getTexture(string fileName);
         SDL_Renderer* renderer;
+        map <string, SDL_Texture*> textures;
     public:
         SDLRendererComponent(SDL_Renderer* renderer): renderer(renderer) {};
         SDL_Texture* loadTexture(string fileName);
         void destroyTexture(string& fileName);
-        map <string, SDL_Texture*> textures;
         SDL_Renderer* getRenderer();
 };
 
 struct SDLEventComponent: public Component {
-
+    private:
+        SDL_Event* event;
+    public:
+        SDLEventComponent() {
+            SDL_Event* event;
+            this->event = event; };
+        SDLEventComponent(SDL_Event* event): event(event) {};
+        SDL_Event* getEvent();
 };
+
+// ------- Managers ------- //
 
 // most often used ECSManager type, usually near the root of the program
 class Scene: public ECSManager {

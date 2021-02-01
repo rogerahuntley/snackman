@@ -58,15 +58,22 @@ SDL_Renderer* SDLRendererComponent::getRenderer(){
     return renderer;
 }
 
+// ------- SDLEventComponent ------- //
+
+SDL_Event* SDLEventComponent::getEvent(){
+    return event;
+}
+
 // ------- Scene ------- //
 
 Scene::Scene(SDL_Renderer* renderer){
     // initalize render component
     SDLRendererComponent renderComp(renderer);
-    // initalize even component
-    
+    // initalize event component
+    SDLEventComponent eventComp;
 
     addComponent(renderComp);
+    addComponent(eventComp);
 };
 
 

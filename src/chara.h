@@ -49,7 +49,7 @@ class CharacterControlSystem: public System {
         void init(ECSManager* manager) override;
         void update(ECSManager* manager) override;
     private:
-        void moveCharacter(PositionComponent& pos, ScaleComponent& scale, RotationComponent& rot);
+        void moveCharacter(SDLEventComponent& event, PositionComponent& pos, ScaleComponent& scale, RotationComponent& rot);
 };
 
 #endif // CHARA_H
