@@ -54,19 +54,33 @@ void SDLRendererComponent::destroyTexture(string& fileName){
     textures.erase(fileName);
 }
 
+SDL_Renderer* SDLRendererComponent::getRenderer(){
+    return renderer;
+}
+
 // ------- Scene ------- //
 
+Scene::Scene(SDL_Renderer* renderer){
+    // initalize render component
+    SDLRendererComponent renderComp(renderer);
+    // initalize even component
+    
+
+    addComponent(renderComp);
+};
+
+
 SDLRendererComponent& Scene::getRenderer(){
-    return renderer;
+    return getComponent<SDLRendererComponent>();
 };
 
 void Scene::render(){
     // get renderer
-    SDLRendererComponent& renderer = getComponent<SDLRendererComponent>();
+    SDL_Renderer* renderer = getComponent<SDLRendererComponent>().getRenderer();
     // clear renderer
-    SDL_RenderClear(renderer.renderer);
+    SDL_RenderClear(renderer);
     // render all render systems
     ECSManager::render();
     // send it boii
-    SDL_RenderPresent(renderer.renderer);
+    SDL_RenderPresent(renderer);
 }

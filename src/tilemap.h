@@ -21,9 +21,23 @@ using std::map;
 
 using namespace ecpps;
 
+// ------- Entities ------- //
+
+class TileMapEntity: public Entity {
+    private:
+        void init() override;
+        void init(const char* tmxFile);
+    public:
+        // constructor
+        TileMapEntity(ID entityID, ECSManager* manager): Entity(entityID, manager) { init(); };
+        TileMapEntity(ID entityID, ECSManager* manager, const char* tmxFile): Entity(entityID, manager) { init(tmxFile); };
+};
+
+// ------- Component ------- //
+
 struct TileMapDataComponent: public Component {
     // holds the name of the file from which to load tilemap data
-    string tmxFile;
+    const char* tmxFile;
     // holds 2d vector of ints to represent the tilemap
     tmx_map* mapData;
     // collision layer
@@ -37,6 +51,8 @@ struct TileMapDataComponent: public Component {
 struct TileMapRenderComponent: public RenderTextureComponent {
     map<unsigned, SDL_Texture*> baseLayers;
 };
+
+// ------- Systems ------- //
 
 class TileMapRenderSystem: public RenderSystem {
     public:

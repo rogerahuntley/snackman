@@ -5,6 +5,7 @@
 
 #include "tilemap.h"
 #include "sdlecs.h"
+#include "chara.h"
 
 // main file ayy
 // this is a lib / framework for learning c++ and making games
@@ -28,31 +29,13 @@ int main(int argv, char** args)
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     // instantiate main scene
-    Scene mainScene;
-
-    // instantiate render component
-    SDLRendererComponent renderComponent;
-    renderComponent.renderer = renderer;
-
-    // add render component to main scene
-    mainScene.addComponent(renderComponent);
+    Scene mainScene(renderer);
 
     // create new tilemap entity
-    Entity& tileMap = mainScene.createEntity();
-
-    // instantiate tilemap data component
-    TileMapDataComponent mapData;
-    mapData.tmxFile = "res/map1.tmx";
-
-    // instantiate tilemap renderer component
-    TileMapRenderComponent mapRenderer;
-
-    // add components to tilemap
-    tileMap.addComponent(mapRenderer);
-    tileMap.addComponent(mapData);
+    Entity& tileMap = mainScene.createEntity<TileMapEntity>("res/map1.tmx");
 
     // create pacman entity
-    Entity& pacman = mainScene.createEntity();
+    Entity& pacman = mainScene.createEntity<PacmanEntity>();
 
     // create ghost entities
     Entity& ghost1 = mainScene.createEntity();
@@ -63,11 +46,14 @@ int main(int argv, char** args)
     // register systems
     mainScene.registerSystem<TileMapDataSystem>();
     mainScene.registerSystem<TileMapRenderSystem>();
+    mainScene.registerSystem<CharacterRenderSystem>();
+    mainScene.registerSystem<CharacterControlSystem>();
 
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
     bool isRunning = true;
+    
     SDL_Event event;
 
     while (isRunning)
