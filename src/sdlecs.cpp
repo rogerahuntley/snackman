@@ -11,6 +11,8 @@ using std::string;
 
 #include "sdlecs.h"
 
+// ------- SDLRenderComponent ------- //
+
 SDL_Texture* SDLRendererComponent::loadTexture(string fileName){
     // get texture pointer ready
     SDL_Texture* texture;

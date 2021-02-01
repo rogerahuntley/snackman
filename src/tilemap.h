@@ -26,6 +26,8 @@ struct TileMapDataComponent: public Component {
     string tmxFile;
     // holds 2d vector of ints to represent the tilemap
     tmx_map* mapData;
+    // collision layer
+    tmx_layer* collisionLayer;
     // number of tiles tall
     unsigned int height;
     // number of tiles wide
@@ -53,6 +55,7 @@ class TileMapDataSystem: public System {
         void init(ECSManager* manager) override;
         void loadMap(TileMapDataComponent& component);
         int getTile(TileMapDataComponent& component, int x, int y);
+        void printLayer(tmx_map* map, tmx_layer* layer);
 };
 
 #endif // MAP_H

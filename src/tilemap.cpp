@@ -18,6 +18,8 @@ using std::ifstream;
 #include "sdlecs.h"
 #include "ecpps/ecpps.h"
 
+const string COLLISION_LAYER("collision");
+
 using namespace ecpps;
 
 // ------- TileMapDataSystem ------- //
@@ -39,15 +41,57 @@ void TMDataSystem::init(ECSManager* manager){
     TMDataComp& tileMap = manager->getComponent<TMDataComp>(entityID);
     // load map
     loadMap(tileMap);
+    // print map
+    printLayer(tileMap.mapData, tileMap.collisionLayer);
   }
   // release init components into regular pools
-  manager->groupEntities<TMDataSystem>();
+  manager->groupEntities<TMDataComp>();
 }
 
 // loads tile data from a file
 void TMDataSystem::loadMap(TMDataComp& component){
   // load data using tmx lib
 	component.mapData = tmx_load(component.tmxFile.c_str());
+  // get collision layer
+  tmx_layer* layers = component.mapData->ly_head;
+  // find collision layer
+  while(layers){
+    // if layer is the same as designated collision layer
+    if(layers->name == COLLISION_LAYER){
+      // save to component
+      component.collisionLayer = layers;
+      // return to stop while loop
+      //return;
+    }
+    // next iteration
+    layers = layers->next;
+  }
+}
+
+// print to console
+void TMDataSystem::printLayer(tmx_map* map, tmx_layer* layer){
+  // if layer is set
+  if(layer == nullptr){
+    return;
+  }
+  // string for outputting to console (remove later)
+  string cout = "collision map:";
+  
+  // initalize vars
+  unsigned int x, y, gid;
+
+  // loop through all map tiles
+  for (x=0; x<map->height; x++) {
+    for (y=0; y<map->width; y++) {
+      // set gid
+      gid = (layer->content.gids[(x*map->width)+y]) & TMX_FLIP_BITS_REMOVAL;
+      // add to cout
+      if(y == 0){ cout += "\n"; }
+      if(gid != 0){  cout += "##"; } else { cout += "  "; }
+    }
+  }
+  // print cout
+  std::cout << cout << std::endl;
 }
 
 // ------- TileMapRenderSystem ------- //
@@ -128,11 +172,9 @@ void TMRenderSystem::drawLayer(SDLRendererComponent& ren, TMDataComp& mapData, T
 
 // returns tile at specific position on map
 void TMRenderSystem::drawLayerBase(SDLRendererComponent& ren, TMDataComp& mapData, TMRenderComp& mapRender, tmx_layer* layer) {
-  // string for outputting to console (remove later)
-  string cout;
-  // ayy
+  // ayy load map data
   tmx_map* map = mapData.mapData;
-  
+  // get vars ready
   unsigned int x, y;
   unsigned int gid, sx, sy, w, h, flags;
   float op;
@@ -147,10 +189,6 @@ void TMRenderSystem::drawLayerBase(SDLRendererComponent& ren, TMDataComp& mapDat
       gid = (layer->content.gids[(x*map->width)+y]) & TMX_FLIP_BITS_REMOVAL;
       // if tile is valid
       if (map->tiles[gid] != NULL) {
-        // get title id for printing
-        unsigned id = map->tiles[gid]->id;
-        if(y == 0){ cout += "\n"; } // remove later
-        if(id == 0){  cout += "##"; } else { cout += "  "; } // remove later
 
         // pull data for tile
         tileset = map->tiles[gid]->tileset;
@@ -165,7 +203,6 @@ void TMRenderSystem::drawLayerBase(SDLRendererComponent& ren, TMDataComp& mapDat
       }
     }
   }
-  std::cout << cout << std::endl;
   SDL_Delay(100);
 }
 

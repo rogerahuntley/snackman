@@ -51,6 +51,14 @@ int main(int argv, char** args)
     tileMap.addComponent(mapRenderer);
     tileMap.addComponent(mapData);
 
+    // create pacman entity
+    Entity& pacman = mainScene.createEntity();
+
+    // create ghost entities
+    Entity& ghost1 = mainScene.createEntity();
+    Entity& ghost2 = mainScene.createEntity();
+    Entity& ghost3 = mainScene.createEntity();
+    Entity& ghost4 = mainScene.createEntity();
 
     // register systems
     mainScene.registerSystem<TileMapDataSystem>();
