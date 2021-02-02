@@ -60,26 +60,62 @@ SDL_Renderer* SDLRendererComponent::getRenderer(){
 
 // ------- SDLEventComponent ------- //
 
-SDL_Event* SDLEventComponent::getEvent(){
+const SDL_Event* SDLEventComponent::getEvent(){
     return event;
+}
+const Uint8* SDLEventComponent::getState(){
+    return state;
+}
+
+// ------- SDLDeltaTimeComponent ------- //
+
+SDLDeltaTimeComponent::SDLDeltaTimeComponent(){
+    currentTime = SDL_GetTicks();
+    lastTime = currentTime;
+    deltaTime;
+}
+
+double SDLDeltaTimeComponent::getDeltaTime(){
+    return deltaTime;
+}
+
+void SDLDeltaTimeComponent::updateTime(){
+    // set delta time
+    currentTime = SDL_GetTicks();
+    deltaTime = (currentTime - lastTime) / 1000.0f;
+    lastTime = currentTime;
 }
 
 // ------- Scene ------- //
 
 Scene::Scene(SDL_Renderer* renderer){
     // initalize render component
-    SDLRendererComponent renderComp(renderer);
+    SDLRendererComponent render(renderer);
     // initalize event component
-    SDLEventComponent eventComp;
+    SDLEventComponent event;
+    // initalize deltaTime component
+    SDLDeltaTimeComponent deltaTime;
 
-    addComponent(renderComp);
-    addComponent(eventComp);
+    addComponent(render);
+    addComponent(event);
+    addComponent(deltaTime);
+
+    groupEntities<SDLRendererComponent>();
+    groupEntities<SDLEventComponent>();
+    groupEntities<SDLDeltaTimeComponent>();
 };
 
 
 SDLRendererComponent& Scene::getRenderer(){
     return getComponent<SDLRendererComponent>();
 };
+
+void Scene::update(){
+    // get delta Time
+    getComponent<SDLDeltaTimeComponent>().updateTime();
+    // render all render systems
+    ECSManager::update();
+}
 
 void Scene::render(){
     // get renderer

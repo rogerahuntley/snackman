@@ -19,10 +19,6 @@
 
 int main(int argv, char** args)
 {
-    double currentTime = SDL_GetTicks();
-    double lastTime = currentTime;
-    double deltaTime;
-
     // init SDL
     SDL_Window* window = SDL_CreateWindow("Snackman early dev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 480, 272, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
@@ -46,14 +42,17 @@ int main(int argv, char** args)
     // register systems
     mainScene.registerSystem<TileMapDataSystem>();
     mainScene.registerSystem<TileMapRenderSystem>();
+
+    // chararacter stuff
     mainScene.registerSystem<CharacterRenderSystem>();
-    mainScene.registerSystem<CharacterControlSystem>();
+    mainScene.registerSystem<PlayerControlSystem>();
+    mainScene.registerSystem<AIControlSystem>();
 
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
     bool isRunning = true;
-    
+
     SDL_Event event;
 
     while (isRunning)
@@ -73,6 +72,7 @@ int main(int argv, char** args)
                 }
             }
         }
+        SDL_PumpEvents();
 
         // INIT NEW COMPONENTS
         mainScene.init();
@@ -82,11 +82,6 @@ int main(int argv, char** args)
 
         // RENDER COMPONENTS
         mainScene.render();
-
-        // get delta time
-        double currentTime = SDL_GetTicks();
-        double deltaTime = (currentTime - lastTime) / 1000.0f;
-        double lastTime = currentTime;
     }
 
     // quit

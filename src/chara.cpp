@@ -19,6 +19,7 @@ void PacmanEntity::init(){
 
     // instantiate chracter component
     CharacterComponent character;
+    character.speed = 4.1f;
 
     // add components to tilemap
     addComponent(position);
@@ -33,22 +34,27 @@ void PacmanEntity::init(){
 void CharacterControlSystem::update(ECSManager* manager){
     // get set of entities
     set<ID>& entities = manager->getComponentEntities<CharacterComponent>();
-    // get event component
-    SDLEventComponent& event = manager->getComponent<SDLEventComponent>();
     // for each entity in set
     for(ID entityID : entities){
         // get relevant components
-        PositionComponent& pos = manager->getComponent<PositionComponent>(entityID);
-        ScaleComponent& scale = manager->getComponent<ScaleComponent>(entityID);
-        RotationComponent& rot = manager->getComponent<RotationComponent>(entityID);
         // render
-        moveCharacter(event, pos, scale, rot);
+        moveCharacter(manager, entityID);
     }
 };
 
-void CharacterControlSystem::moveCharacter(SDLEventComponent event, PositionComponent& pos, ScaleComponent& scale, RotationComponent& rot){
-    pos.x += .01;
-    pos.y += .001;
+void CharacterControlSystem::moveCharacter(ECSManager* manager, ID entityID){
+    // get event components
+    SDLEventComponent& event = manager->getComponent<SDLEventComponent>();
+    CharacterComponent& character = manager->getComponent<CharacterComponent>(entityID);
+    PositionComponent& pos = manager->getComponent<PositionComponent>(entityID);
+    ScaleComponent& scale = manager->getComponent<ScaleComponent>(entityID);
+    RotationComponent& rot = manager->getComponent<RotationComponent>(entityID);
+    // get keyboard state
+    const Uint8* state(event.getState());
+
+    // 1 is true, 0 if false
+    pos.x += state[SDL_SCANCODE_D]*character.speed*.01 + -state[SDL_SCANCODE_A]*character.speed*.01;
+    pos.y += state[SDL_SCANCODE_S]*character.speed*.01 + -state[SDL_SCANCODE_W]*character.speed*.01;
 };
 
 void CharacterControlSystem::init(ECSManager* manager){
@@ -69,16 +75,18 @@ void CharacterRenderSystem::render(ECSManager* manager){
     set<ID>& entities = manager->getComponentEntities<CharacterComponent>();
     // for each entity in set
     for(ID entityID : entities){
-        // get relevant components
-        PositionComponent& pos = manager->getComponent<PositionComponent>(entityID);
-        ScaleComponent& scale = manager->getComponent<ScaleComponent>(entityID);
-        RotationComponent& rot = manager->getComponent<RotationComponent>(entityID);
         // render
-        drawCharacter(renderer, pos, scale, rot);
+        drawCharacter(manager, entityID);
     }
 };
 
-void CharacterRenderSystem::drawCharacter(SDLRendererComponent& renderer, PositionComponent& pos, ScaleComponent& scale, RotationComponent& rot){
+void CharacterRenderSystem::drawCharacter(ECSManager* manager, ID entityID){
+    // get renderer
+    SDLRendererComponent& renderer = manager->getComponent<SDLRendererComponent>();
+    // get relevant components
+    PositionComponent& pos = manager->getComponent<PositionComponent>(entityID);
+    ScaleComponent& scale = manager->getComponent<ScaleComponent>(entityID);
+    RotationComponent& rot = manager->getComponent<RotationComponent>(entityID);
     // draw square
     SDL_Rect fillRect = { (int)pos.x, (int)pos.y, (int)scale.x, (int)scale.y };
     SDL_SetRenderDrawColor( renderer.getRenderer(), 0xFF, 0x00, 0x00, 0xFF );        

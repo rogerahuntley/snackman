@@ -37,13 +37,23 @@ struct SDLRendererComponent: public RenderComponent {
 
 struct SDLEventComponent: public Component {
     private:
-        SDL_Event* event;
+        const SDL_Event* event;
+        const Uint8* state = SDL_GetKeyboardState(NULL);
     public:
-        SDLEventComponent() {
-            SDL_Event* event;
-            this->event = event; };
-        SDLEventComponent(SDL_Event* event): event(event) {};
-        SDL_Event* getEvent();
+        SDLEventComponent() {};
+        const SDL_Event* getEvent();
+        const Uint8* getState();
+};
+
+struct SDLDeltaTimeComponent: public Component {
+    private:
+        double currentTime;
+        double lastTime;
+        double deltaTime;
+    public:
+        SDLDeltaTimeComponent();
+        double getDeltaTime();
+        void updateTime();
 };
 
 // ------- Managers ------- //
@@ -55,6 +65,7 @@ class Scene: public ECSManager {
         Scene(SDL_Renderer* renderer);
         SDLRendererComponent& getRenderer();
         void render() override;
+        void update() override;
 };
 
 #endif // SDLECS_H
