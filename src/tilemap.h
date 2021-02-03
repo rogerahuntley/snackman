@@ -63,7 +63,7 @@ class TileMapRenderSystem: public RenderSystem {
         void drawLayer(SDLRendererComponent& ren, TileMapDataComponent& mapData, TileMapRenderComponent& mapRender, tmx_layer *layer);
         void drawLayerBase(SDLRendererComponent& ren, TileMapDataComponent& mapData, TileMapRenderComponent& mapRender, tmx_layer *layer);
         void drawTile(SDLRendererComponent& ren, SDL_Texture* image, unsigned int sx, unsigned int sy, unsigned int sw, unsigned int sh,
-               unsigned int dx, unsigned int dy, float opacity, unsigned int flags);
+               unsigned int dx, unsigned int dy, unsigned int flags);
 };
 
 class TileMapDataSystem: public System {

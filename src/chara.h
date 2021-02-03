@@ -8,11 +8,12 @@
 // this is stuff relating to the characters
 // i.e., pacman and the ghosts
 
-enum DIRECTIONS {
+enum DIRECTION {
     UP,
     DOWN,
     LEFT,
-    RIGHT
+    RIGHT,
+    NONE
 };
 
 using namespace ecpps;
@@ -38,8 +39,8 @@ class GhostEntity: public Entity {
 // ------- Components ------- //
 
 struct CharacterComponent: public Component {
-    float speed = 1.0f;
-    int directions[4]; // use DIRECTION as index
+    float speed = 16.0f;
+    DIRECTION direction = NONE; // use DIRECTION as index
 };
 
 // ------- Systems ------- //
@@ -52,12 +53,24 @@ class CharacterControlSystem: public System {
         void moveCharacter(ECSManager* manager, ID entityID);
 };
 
-class PlayerControlSystem: public CharacterControlSystem {
-
+class CharacterControllerSystem: public System {
+    protected:
+        virtual void updateInput(ECSManager* manager, ID entityID) {};
+        // returns true if direction has changed
+        bool updateDirection(ECSManager* manager, ID entityID, DIRECTION direction);
 };
 
-class AIControlSystem: public CharacterControlSystem {
+class PlayerControllerSystem: public CharacterControllerSystem {
+    public:
+        void update(ECSManager* manager) override;
+        double inputTimer = 0.0;
+    private:
+        void updateInput(ECSManager* manager, ID entityID) override;
+};
 
+class AIControllerSystem: public CharacterControllerSystem {
+    public:
+    private:
 };
 
 class CharacterRenderSystem: public RenderSystem {

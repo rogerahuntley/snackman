@@ -21,7 +21,7 @@ int main(int argv, char** args)
 {
     // init SDL
     SDL_Window* window = SDL_CreateWindow("Snackman early dev", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 480, 272, 0);
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     // instantiate main scene
@@ -45,8 +45,10 @@ int main(int argv, char** args)
 
     // chararacter stuff
     mainScene.registerSystem<CharacterRenderSystem>();
-    mainScene.registerSystem<PlayerControlSystem>();
-    mainScene.registerSystem<AIControlSystem>();
+
+    mainScene.registerSystem<PlayerControllerSystem>();
+    mainScene.registerSystem<AIControllerSystem>();
+    mainScene.registerSystem<CharacterControlSystem>();
 
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
@@ -57,21 +59,21 @@ int main(int argv, char** args)
 
     while (isRunning)
     {
-        while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-            {
-            case SDL_QUIT:
-                isRunning = false;
-                break;
+        // while (SDL_PollEvent(&event))
+        // {
+        //     switch (event.type)
+        //     {
+        //     case SDL_QUIT:
+        //         isRunning = false;
+        //         break;
 
-            case SDL_KEYDOWN:
-                if (event.key.keysym.sym == SDLK_ESCAPE)
-                {
-                    isRunning = false;
-                }
-            }
-        }
+        //     case SDL_KEYDOWN:
+        //         if (event.key.keysym.sym == SDLK_ESCAPE)
+        //         {
+        //             isRunning = false;
+        //         }
+        //     }
+        // }
         SDL_PumpEvents();
 
         // INIT NEW COMPONENTS

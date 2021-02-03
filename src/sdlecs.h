@@ -6,6 +6,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 
 #include "ecpps/ecpps.h"
 
@@ -14,6 +15,7 @@
 
 using std::string;
 using std::map;
+using std::set;
 
 using namespace ecpps;
 
@@ -37,22 +39,27 @@ struct SDLRendererComponent: public RenderComponent {
 
 struct SDLEventComponent: public Component {
     private:
-        const SDL_Event* event;
-        const Uint8* state = SDL_GetKeyboardState(NULL);
+        SDL_Event event;
+        set<SDL_Scancode> keyUp;
+        set<SDL_Scancode> keyPressed;
+        set<SDL_Scancode> keyDown;
     public:
         SDLEventComponent() {};
-        const SDL_Event* getEvent();
-        const Uint8* getState();
+        bool isUp(SDL_Scancode key) { return keyUp.find(key) != keyUp.end(); };
+        bool isPressed(SDL_Scancode key) { return keyPressed.find(key) != keyPressed.end(); };
+        bool isDown(SDL_Scancode key) { return keyDown.find(key) != keyDown.end(); };
+        void flushEvents();
 };
 
 struct SDLDeltaTimeComponent: public Component {
     private:
-        double currentTime;
-        double lastTime;
-        double deltaTime;
+        Uint64 currentTime;
+        Uint64 lastTime = 0;
+        double deltaTime = 0.0;
     public:
-        SDLDeltaTimeComponent();
-        double getDeltaTime();
+        SDLDeltaTimeComponent(): currentTime(SDL_GetPerformanceCounter()),lastTime(SDL_GetPerformanceCounter()) {};
+        double getDeltaTimeS();
+        double getDeltaTimeMS();
         void updateTime();
 };
 

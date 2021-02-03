@@ -60,29 +60,47 @@ SDL_Renderer* SDLRendererComponent::getRenderer(){
 
 // ------- SDLEventComponent ------- //
 
-const SDL_Event* SDLEventComponent::getEvent(){
-    return event;
+void SDLEventComponent::flushEvents(){
+    // move from keydown to keypressed
+    keyPressed.insert(keyDown.begin(), keyDown.end());
+    // clear up/down events
+    keyDown.clear();
+    keyUp.clear();
+
+    // for every event
+    while(SDL_PollEvent(&event)){
+        switch (event.type){
+            case SDL_KEYDOWN:
+                    keyDown.emplace(event.key.keysym.scancode);
+                break;
+            case SDL_KEYUP:
+                    keyUp.emplace(event.key.keysym.scancode);
+                break;
+        }
+    }
+    
+    // check keyup and remove from keypressed
+    for(SDL_Scancode key : keyUp){
+        keyPressed.erase(key);
+    }
 }
-const Uint8* SDLEventComponent::getState(){
-    return state;
-}
+
+
 
 // ------- SDLDeltaTimeComponent ------- //
 
-SDLDeltaTimeComponent::SDLDeltaTimeComponent(){
-    currentTime = SDL_GetTicks();
-    lastTime = currentTime;
-    deltaTime;
+double SDLDeltaTimeComponent::getDeltaTimeS(){
+    return deltaTime * 0.001;
 }
 
-double SDLDeltaTimeComponent::getDeltaTime(){
+double SDLDeltaTimeComponent::getDeltaTimeMS(){
     return deltaTime;
 }
 
 void SDLDeltaTimeComponent::updateTime(){
     // set delta time
-    currentTime = SDL_GetTicks();
-    deltaTime = (currentTime - lastTime) / 1000.0f;
+    currentTime = SDL_GetPerformanceCounter();
+    deltaTime = (currentTime - lastTime) * 1000 / (double)SDL_GetPerformanceFrequency();
     lastTime = currentTime;
 }
 
@@ -111,8 +129,10 @@ SDLRendererComponent& Scene::getRenderer(){
 };
 
 void Scene::update(){
-    // get delta Time
+    // update delta time
     getComponent<SDLDeltaTimeComponent>().updateTime();
+    // update events
+    getComponent<SDLEventComponent>().flushEvents();
     // render all render systems
     ECSManager::update();
 }

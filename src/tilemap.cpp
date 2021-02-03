@@ -106,12 +106,19 @@ void TMDataSystem::printLayer(tmx_map* map, tmx_layer* layer){
             gid = (layer->content.gids[(x*map->width)+y]) & TMX_FLIP_BITS_REMOVAL;
             // add to cout
             if(y == 0){ cout += "\n"; }
-            if(gid != 0){  cout += "##"; } else { cout += "  "; }
+            if(gid != 0){  cout += "##"; } else { 
+                
+                
+                
+                cout += "  ";
+            }
         }
     }
     // print cout
     std::cout << cout << std::endl;
 }
+
+
 
 // ------- TileMapRenderSystem ------- //
 
@@ -195,10 +202,8 @@ void TMRenderSystem::drawLayerBase(SDLRendererComponent& ren, TMDataComp& mapDat
     // get vars ready
     unsigned int x, y;
     unsigned int gid, sx, sy, w, h, flags;
-    float op;
     tmx_tileset* tileset;
     SDL_Texture* image;
-    op = layer->opacity;
 
     // loop through all map tiles
     for (x=0; x<map->height; x++) {
@@ -217,7 +222,7 @@ void TMRenderSystem::drawLayerBase(SDLRendererComponent& ren, TMDataComp& mapDat
                 h  = tileset->tile_height;
 
                 // draw tile
-                drawTile(ren, image, sx, sy, w, h, y*tileset->tile_width, x*tileset->tile_height, op, gid);
+                drawTile(ren, image, sx, sy, w, h, y*tileset->tile_width, x*tileset->tile_height, gid);
             }
         }
     }
@@ -225,7 +230,7 @@ void TMRenderSystem::drawLayerBase(SDLRendererComponent& ren, TMDataComp& mapDat
 }
 
 void TMRenderSystem::drawTile(SDLRendererComponent& ren, SDL_Texture* image, unsigned int sx, unsigned int sy, unsigned int sw, unsigned int sh,
-               unsigned int dx, unsigned int dy, float opacity, unsigned int flags) {
+               unsigned int dx, unsigned int dy, unsigned int flags) {
 	SDL_Rect src_rect, dest_rect;
 	src_rect.x = sx;
 	src_rect.y = sy;
