@@ -5,14 +5,18 @@
 #include "sdlecs.h"
 #include "gcomp.h"
 
+#include <utility>
+
+using std::pair;
+
 // this is stuff relating to the characters
 // i.e., pacman and the ghosts
 
 enum DIRECTION {
     UP,
+    RIGHT,
     DOWN,
     LEFT,
-    RIGHT,
     NONE
 };
 
@@ -51,6 +55,7 @@ class CharacterControlSystem: public System {
         void update(ECSManager* manager) override;
     private:
         void moveCharacter(ECSManager* manager, ID entityID);
+        bool applyVector(ECSManager* manager, ID entityID, PositionComponent& vector)
 };
 
 class CharacterControllerSystem: public System {
@@ -58,6 +63,8 @@ class CharacterControllerSystem: public System {
         virtual void updateInput(ECSManager* manager, ID entityID) {};
         // returns true if direction has changed
         bool updateDirection(ECSManager* manager, ID entityID, DIRECTION direction);
+        set<DIRECTION> getPossibleDirections(ECSManager* manager, ID entityID);
+        PositionComponent getCurrentTile(ECSManager* manager, ID entityID);
 };
 
 class PlayerControllerSystem: public CharacterControllerSystem {

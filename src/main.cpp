@@ -29,6 +29,7 @@ int main(int argv, char** args)
 
     // create new tilemap entity
     Entity& tileMap = mainScene.createEntity<TileMapEntity>("res/map1.tmx");
+    mainScene.setSpecialEntity("tilemap", tileMap);
 
     // create pacman entity
     Entity& pacman = mainScene.createEntity<PacmanEntity>();

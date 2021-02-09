@@ -2,6 +2,9 @@
 #include "sdlecs.h"
 #include "ecpps/ecpps.h"
 #include "gcomp.h"
+#include "tilemap.h"
+
+#include <math.h>
 
 using namespace ecpps;
 
@@ -9,7 +12,7 @@ using namespace ecpps;
 
 void PacmanEntity::init(){
     // instantiate position
-    PositionComponent position(16, 16);
+    PositionComponent position(16, 64);
 
     // instantiate scale
     ScaleComponent scale(16, 16);
@@ -52,27 +55,33 @@ void CharacterControlSystem::moveCharacter(ECSManager* manager, ID entityID){
 
     double moveDist = character.speed * (double)deltaTime.getDeltaTimeS();
 
+    
+    PositionComponent changeVector;
+
     switch (character.direction)
     {
     case UP:
-        pos.y -= moveDist;
+        changeVector.y -= moveDist;
         break;
     case RIGHT:
-        pos.x += moveDist;
+        changeVector.x += moveDist;
         break;
     case DOWN:
-        pos.y += moveDist;
+        changeVector.y += moveDist;
         break;
     case LEFT:
-        pos.x -= moveDist;
+        changeVector.x -= moveDist;
         break;
-    case NONE:
-        /* code */
-        break;
-    };
-    // 1 is true, 0 if false
-    //pos.x += state[SDL_SCANCODE_D]* + -state[SDL_SCANCODE_A]*character.speed*deltaTime.getDeltaTimeS();
-    //pos.y += state[SDL_SCANCODE_S]*character.speed*deltaTime.getDeltaTimeS() + -state[SDL_SCANCODE_W]*character.speed*deltaTime.getDeltaTimeS();
+    }
+    applyVector(manager, entityID, changeVector);
+};
+
+bool CharacterControlSystem::applyVector(ECSManager* manager, ID entityID, PositionComponent& vector){
+
+};
+
+bool checkTileCollision(ECSManager* manager, ID entityID, PositionComponent position){
+    
 };
 
 void CharacterControlSystem::init(ECSManager* manager){
@@ -106,6 +115,43 @@ bool CharacterControllerSystem::updateDirection(ECSManager* manager, ID entityID
     return isChanged;
 };
 
+set<DIRECTION> CharacterControllerSystem::getPossibleDirections(ECSManager* manager, ID entityID){
+    // assume first tilemap is only tilemap - can be fixed later if needed, not in this proj
+    ID tilemapEntity = manager->getSpecialEntity("tilemap");
+    TileMapDataComponent mapData = manager->getComponent<TileMapDataComponent>(tilemapEntity);
+
+    // weird but we can use component just as regular objects too
+    PositionComponent mapPosition = getCurrentTile(manager, entityID);
+
+    bool upPosition = mapData.getTileEmpty(mapPosition.x, mapPosition.y);
+    bool rightPosition = mapData.getTileEmpty(mapPosition.x+1, mapPosition.y);
+    bool downPosition = mapData.getTileEmpty(mapPosition.x, mapPosition.y+1);
+    bool leftPosition = mapData.getTileEmpty(mapPosition.x, mapPosition.y);
+
+    set<DIRECTION> possibleDirections;
+
+    if(upPosition) { possibleDirections.insert(UP); };
+    if(rightPosition) { possibleDirections.insert(RIGHT); };
+    if(downPosition) { possibleDirections.insert(DOWN); };
+    if(leftPosition) { possibleDirections.insert(LEFT); };
+
+    return possibleDirections;
+}
+
+PositionComponent CharacterControllerSystem::getCurrentTile(ECSManager* manager, ID entityID){
+    // defined outside, make dynamic later
+    const float widthheight = 16.0;
+    // get regular chracter posistion
+    PositionComponent& characterPos = manager->getComponent<PositionComponent>(entityID);
+    ScaleComponent& characterScale = manager->getComponent<ScaleComponent>(entityID);
+
+    PositionComponent tilemapPos = { (int)floor(characterPos.x / widthheight), (int)floor(characterPos.y / widthheight) };
+
+    std::cout << "x: " << tilemapPos.x << ", y: " << tilemapPos.y << std::endl;
+
+    return tilemapPos;
+}
+
 // ------- PlayerControllerSystem ------- //
 
 void PlayerControllerSystem::update(ECSManager* manager){
@@ -134,6 +180,14 @@ void PlayerControllerSystem::updateInput(ECSManager* manager, ID entityID){
     }
     if(event.isDown(SDL_SCANCODE_A)){
         updateDirection(manager, entityID, LEFT);
+    }
+
+    CharacterComponent& character = manager->getComponent<CharacterComponent>(entityID);
+
+    set<DIRECTION> directions = getPossibleDirections(manager, entityID);
+    // if direction is not possible
+    if(directions.find(character.direction) == directions.end()){
+        updateDirection(manager, entityID, NONE);
     }
 };
 

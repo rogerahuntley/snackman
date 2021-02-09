@@ -46,6 +46,8 @@ struct TileMapDataComponent: public Component {
     unsigned int height;
     // number of tiles wide
     unsigned int width;
+    // get collision at
+    bool getTileEmpty(int x, int y){ return collisionLayer->content.gids[(y*mapData->width)+x]==0; };
 };
 
 struct TileMapRenderComponent: public RenderTextureComponent {
