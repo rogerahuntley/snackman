@@ -1,6 +1,3 @@
-[submodule "ecpps"]
-	path = ecpps
-	url = https://github.com/rogerthat52/ecpps
 [submodule "src/ecpps"]
 	path = src/ecpps
 	url = https://github.com/rogerthat52/ecpps
