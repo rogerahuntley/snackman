@@ -4,3 +4,6 @@
 [submodule "src/ecpps"]
 	path = src/ecpps
 	url = https://github.com/rogerthat52/ecpps
+[submodule "src/physicpps"]
+	path = src/physicpps
+	url = git@github.com:rogerthat52/physicpps.git
