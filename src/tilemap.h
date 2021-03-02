@@ -29,7 +29,6 @@ class TileMapEntity: public Entity {
         void init(const char* tmxFile);
     public:
         // constructor
-        TileMapEntity(ID entityID, ECSManager* manager): Entity(entityID, manager) { init(); };
         TileMapEntity(ID entityID, ECSManager* manager, const char* tmxFile): Entity(entityID, manager) { init(tmxFile); };
 };
 

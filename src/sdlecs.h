@@ -44,6 +44,7 @@ struct SDLEventComponent: public Component {
         set<SDL_Scancode> keyPressed;
         set<SDL_Scancode> keyDown;
     public:
+        bool quit = false;
         SDLEventComponent() {};
         bool isUp(SDL_Scancode key) { return keyUp.find(key) != keyUp.end(); };
         bool isPressed(SDL_Scancode key) { return keyPressed.find(key) != keyPressed.end(); };

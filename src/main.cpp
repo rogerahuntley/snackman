@@ -32,51 +32,31 @@ int main(int argv, char** args)
     mainScene.setSpecialEntity("tilemap", tileMap);
 
     // create pacman entity
-    Entity& pacman = mainScene.createEntity<PacmanEntity>();
+    Entity& pacman = mainScene.createEntity<PacmanEntity>(16, 64);
 
     // create ghost entities
-    Entity& ghost1 = mainScene.createEntity();
-    Entity& ghost2 = mainScene.createEntity();
-    Entity& ghost3 = mainScene.createEntity();
-    Entity& ghost4 = mainScene.createEntity();
+    Entity& ghost1 = mainScene.createEntity<GhostEntity>(64, 32);
+    Entity& ghost2 = mainScene.createEntity<GhostEntity>(32, 64);
+    Entity& ghost3 = mainScene.createEntity<GhostEntity>(128, 128);
+    Entity& ghost4 = mainScene.createEntity<GhostEntity>(128, 64);
 
     // register systems
     mainScene.registerSystem<TileMapDataSystem>();
     mainScene.registerSystem<TileMapRenderSystem>();
 
     // chararacter stuff
-    mainScene.registerSystem<CharacterRenderSystem>();
-
     mainScene.registerSystem<PlayerControllerSystem>();
     mainScene.registerSystem<AIControllerSystem>();
     mainScene.registerSystem<CharacterControlSystem>();
+    mainScene.registerSystem<CharacterRenderSystem>();
 
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
-    bool isRunning = true;
+    SDLEventComponent& event = mainScene.getComponent<SDLEventComponent>();
 
-    SDL_Event event;
-
-    while (isRunning)
+    while (!event.quit)
     {
-        // while (SDL_PollEvent(&event))
-        // {
-        //     switch (event.type)
-        //     {
-        //     case SDL_QUIT:
-        //         isRunning = false;
-        //         break;
-
-        //     case SDL_KEYDOWN:
-        //         if (event.key.keysym.sym == SDLK_ESCAPE)
-        //         {
-        //             isRunning = false;
-        //         }
-        //     }
-        // }
-        SDL_PumpEvents();
-
         // INIT NEW COMPONENTS
         mainScene.init();
 

@@ -1,9 +1,11 @@
 #ifndef CHARA_H
 #define CHARA_H
 
-#include "ecpps/ecpps.h"
 #include "sdlecs.h"
 #include "gcomp.h"
+
+#include "ecpps/ecpps.h"
+#include "physicpps/physicpps.h"
 
 #include <utility>
 
@@ -21,30 +23,41 @@ enum DIRECTION {
 };
 
 using namespace ecpps;
+using namespace physicpps;
 
 // ------- Entities ------- //
 
 class PacmanEntity: public Entity {
     private:
-        void init() override;
+        void init(float x, float y);
     public:
         // constructor
-        PacmanEntity(ID entityID, ECSManager* manager): Entity(entityID, manager) { init(); };
+        PacmanEntity(ID entityID, ECSManager* manager, float x = 0, float y = 0): Entity(entityID, manager) { init(x, y); };
 };
 
 class GhostEntity: public Entity {
     private:
-        void init() override;
+        void init(float x, float y);
     public:
         // constructor
-        GhostEntity(ID entityID, ECSManager* manager): Entity(entityID, manager) { init(); };
+        GhostEntity(ID entityID, ECSManager* manager, float x = 0, float y = 0): Entity(entityID, manager) { init(x, y); };
 };
 
 // ------- Components ------- //
 
 struct CharacterComponent: public Component {
     float speed = 16.0f;
+    float width = 16;
+    float height = 16;
     DIRECTION direction = NONE; // use DIRECTION as index
+    DIRECTION newDirection = NONE; // use DIRECTION as index
+    pair<int, int> mapCoord;
+};
+
+struct PlayerControlComponent: public Component {
+};
+
+struct AIControlComponent: public Component {
 };
 
 // ------- Systems ------- //
@@ -55,29 +68,28 @@ class CharacterControlSystem: public System {
         void update(ECSManager* manager) override;
     private:
         void moveCharacter(ECSManager* manager, ID entityID);
-        bool applyVector(ECSManager* manager, ID entityID, PositionComponent& vector)
+        void applyVector(ECSManager* manager, ID entityID, Vector2& vector);
+        pair<int, int> getTile(ECSManager* manager, ID entityID);
 };
 
 class CharacterControllerSystem: public System {
     protected:
-        virtual void updateInput(ECSManager* manager, ID entityID) {};
-        // returns true if direction has changed
-        bool updateDirection(ECSManager* manager, ID entityID, DIRECTION direction);
-        set<DIRECTION> getPossibleDirections(ECSManager* manager, ID entityID);
-        PositionComponent getCurrentTile(ECSManager* manager, ID entityID);
 };
 
-class PlayerControllerSystem: public CharacterControllerSystem {
+class PlayerControllerSystem: public System {
     public:
+        void init(ECSManager* manager) override;
         void update(ECSManager* manager) override;
-        double inputTimer = 0.0;
     private:
-        void updateInput(ECSManager* manager, ID entityID) override;
+        void updateInput(ECSManager* manager, ID entityID);
 };
 
-class AIControllerSystem: public CharacterControllerSystem {
+class AIControllerSystem: public System {
     public:
+        void init(ECSManager* manager) override;
+        void update(ECSManager* manager) override;
     private:
+        void updateInput(ECSManager* manager, ID entityID);
 };
 
 class CharacterRenderSystem: public RenderSystem {

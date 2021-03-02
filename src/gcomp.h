@@ -11,24 +11,32 @@ class PositionComponent;
 typedef PositionComponent PositionC ;
 
 struct PositionComponent: public Component {
-    PositionComponent(int x = 0, int y = 0, int z = 0): x(x),y(y),z(z) {};
+    PositionComponent(int x = 0, int y = 0): x(x),y(y) {};
     float x;
     float y;
-    float z;
 };
 
 struct ScaleComponent: public Component {
-    ScaleComponent(int x = 0, int y = 0, int z = 0): x(x),y(y),z(z) {};
+    ScaleComponent(int x = 1, int y = 1): x(x),y(y) {};
     float x;
     float y;
-    float z;
 };
 
 struct RotationComponent: public Component {
-    RotationComponent(int x = 0, int y = 0, int z = 0): x(x),y(y),z(z) {};
+    RotationComponent(int x = 0): x(x) {};
     float x;
-    float y;
-    float z;
+};
+
+struct CollisionComponent: public Component {
+
+};
+
+struct CollisionBoxComponent: public CollisionComponent {
+
+};
+
+struct CollisionSet: public Component {
+    
 };
 
 #endif // GCOMP_H

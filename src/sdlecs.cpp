@@ -76,6 +76,9 @@ void SDLEventComponent::flushEvents(){
             case SDL_KEYUP:
                     keyUp.emplace(event.key.keysym.scancode);
                 break;
+            case SDL_QUIT:
+                quit = true;
+                break;
         }
     }
     

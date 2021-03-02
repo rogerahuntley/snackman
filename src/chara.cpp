@@ -1,21 +1,27 @@
 #include "chara.h"
 #include "sdlecs.h"
-#include "ecpps/ecpps.h"
 #include "gcomp.h"
 #include "tilemap.h"
 
+#include "ecpps/ecpps.h"
+#include "physicpps/physicpps.h"
+
 #include <math.h>
+#include <utility>
+
+using std::pair;
 
 using namespace ecpps;
+using namespace physicpps;
 
 // // ------- PacmanEntity ------- //
 
-void PacmanEntity::init(){
+void PacmanEntity::init(float x, float y){
     // instantiate position
-    PositionComponent position(16, 64);
+    PositionComponent position(x, y);
 
     // instantiate scale
-    ScaleComponent scale(16, 16);
+    ScaleComponent scale;
 
     // instantiate rotation
     RotationComponent rotation;
@@ -24,12 +30,42 @@ void PacmanEntity::init(){
     CharacterComponent character;
     character.speed = 64.0f;
 
+    // instantiate player controller
+    PlayerControlComponent playerControl;
+
     // add components to tilemap
     addComponent(position);
     addComponent(scale);
     addComponent(rotation);
     addComponent(character);
+    addComponent(playerControl);
+};
 
+// // ------- GhostEntity ------- //
+
+void GhostEntity::init(float x, float y){
+    // instantiate position
+    PositionComponent position(x, y);
+
+    // instantiate scale
+    ScaleComponent scale;
+
+    // instantiate rotation
+    RotationComponent rotation;
+
+    // instantiate chracter component
+    CharacterComponent character;
+    character.speed = 64.0f;
+
+    // instantiate ai controller
+    AIControlComponent aiControl;
+
+    // add components to tilemap
+    addComponent(position);
+    addComponent(scale);
+    addComponent(rotation);
+    addComponent(character);
+    addComponent(aiControl);
 };
 
 // ------- CharacterControlSystem ------- //
@@ -47,41 +83,67 @@ void CharacterControlSystem::update(ECSManager* manager){
 void CharacterControlSystem::moveCharacter(ECSManager* manager, ID entityID){
     // get event components
     SDLDeltaTimeComponent& deltaTime = manager->getComponent<SDLDeltaTimeComponent>();
-    SDLEventComponent& event = manager->getComponent<SDLEventComponent>();
     CharacterComponent& character = manager->getComponent<CharacterComponent>(entityID);
-    PositionComponent& pos = manager->getComponent<PositionComponent>(entityID);
-    ScaleComponent& scale = manager->getComponent<ScaleComponent>(entityID);
-    RotationComponent& rot = manager->getComponent<RotationComponent>(entityID);
+    PositionComponent& position = manager->getComponent<PositionComponent>(entityID);
 
     double moveDist = character.speed * (double)deltaTime.getDeltaTimeS();
 
-    
-    PositionComponent changeVector;
+    pair<int, int> mapCoord = getTile(manager, entityID);
+    if(mapCoord != character.mapCoord || character.direction == NONE){
+        if(character.direction != character.newDirection){
+            position.x = mapCoord.first * 16;
+            position.y = mapCoord.second * 16;
+            character.direction = character.newDirection;
+        }
+        character.mapCoord = mapCoord;
+    }
 
+
+    Vector2 changeVector;
     switch (character.direction)
     {
     case UP:
-        changeVector.y -= moveDist;
+        changeVector.y = -moveDist;
         break;
     case RIGHT:
-        changeVector.x += moveDist;
+        changeVector.x = moveDist;
         break;
     case DOWN:
-        changeVector.y += moveDist;
+        changeVector.y = moveDist;
         break;
     case LEFT:
-        changeVector.x -= moveDist;
+        changeVector.x = -moveDist;
         break;
     }
     applyVector(manager, entityID, changeVector);
 };
 
-bool CharacterControlSystem::applyVector(ECSManager* manager, ID entityID, PositionComponent& vector){
+pair<int, int> CharacterControlSystem::getTile(ECSManager* manager, ID entityID){
+    // get map data
+    TileMapDataComponent mapData = manager->getComponent<TileMapDataComponent>(manager->getSpecialEntity("tilemap"));
+    int height = mapData.mapData->tile_height;
+    int width = mapData.mapData->tile_width;
 
+    PositionComponent& position = manager->getComponent<PositionComponent>(entityID);
+    int x = floor(position.x / width) * width;
+    int y = floor(position.y / height) * height;
+    pair<int, int> toReturn(x, y);
+    return toReturn;
+}
+
+bool getCollisionAtTile(ECSManager* manager, ID entityID, pair<int, int> tile){
+    return false;
+}
+
+void CharacterControlSystem::applyVector(ECSManager* manager, ID entityID, Vector2& vector){
+    
+    PositionComponent& pos = manager->getComponent<PositionComponent>(entityID);
+    pos.x += vector.x;
+    pos.y += vector.y;
 };
 
 bool checkTileCollision(ECSManager* manager, ID entityID, PositionComponent position){
-    
+    return false;
 };
 
 void CharacterControlSystem::init(ECSManager* manager){
@@ -92,71 +154,18 @@ void CharacterControlSystem::init(ECSManager* manager){
     manager->groupEntities<RotationComponent>();
 };
 
-// ------- ChracterControllerSystem ------- //
-
-bool CharacterControllerSystem::updateDirection(ECSManager* manager, ID entityID, DIRECTION direction){
-    // normally direction would be a Vector2 and would be normalized
-    // but with pacman it's gonna be something different
-    // we'll check in the controller system if pacman is in a position to be able to change his direction
-    // and if so, we change that mf direction
-    // note: we also have to consider his distance when changing direction
-    // we want him aligned to the tile edge parallel to his direction
-    CharacterComponent& character = manager->getComponent<CharacterComponent>(entityID);
-
-    // check if changed
-    bool isChanged = false;
-    if(character.direction != direction){
-        // if changed, set return val
-        isChanged = true;
-        // set direction
-        character.direction = direction;
-    }
-    // return val
-    return isChanged;
-};
-
-set<DIRECTION> CharacterControllerSystem::getPossibleDirections(ECSManager* manager, ID entityID){
-    // assume first tilemap is only tilemap - can be fixed later if needed, not in this proj
-    ID tilemapEntity = manager->getSpecialEntity("tilemap");
-    TileMapDataComponent mapData = manager->getComponent<TileMapDataComponent>(tilemapEntity);
-
-    // weird but we can use component just as regular objects too
-    PositionComponent mapPosition = getCurrentTile(manager, entityID);
-
-    bool upPosition = mapData.getTileEmpty(mapPosition.x, mapPosition.y);
-    bool rightPosition = mapData.getTileEmpty(mapPosition.x+1, mapPosition.y);
-    bool downPosition = mapData.getTileEmpty(mapPosition.x, mapPosition.y+1);
-    bool leftPosition = mapData.getTileEmpty(mapPosition.x, mapPosition.y);
-
-    set<DIRECTION> possibleDirections;
-
-    if(upPosition) { possibleDirections.insert(UP); };
-    if(rightPosition) { possibleDirections.insert(RIGHT); };
-    if(downPosition) { possibleDirections.insert(DOWN); };
-    if(leftPosition) { possibleDirections.insert(LEFT); };
-
-    return possibleDirections;
-}
-
-PositionComponent CharacterControllerSystem::getCurrentTile(ECSManager* manager, ID entityID){
-    // defined outside, make dynamic later
-    const float widthheight = 16.0;
-    // get regular chracter posistion
-    PositionComponent& characterPos = manager->getComponent<PositionComponent>(entityID);
-    ScaleComponent& characterScale = manager->getComponent<ScaleComponent>(entityID);
-
-    PositionComponent tilemapPos = { (int)floor(characterPos.x / widthheight), (int)floor(characterPos.y / widthheight) };
-
-    std::cout << "x: " << tilemapPos.x << ", y: " << tilemapPos.y << std::endl;
-
-    return tilemapPos;
-}
+// ------- CharacterComponent ------- //
 
 // ------- PlayerControllerSystem ------- //
 
+void PlayerControllerSystem::init(ECSManager* manager){
+    // tell manager that these components are ready
+    manager->groupEntities<PlayerControlComponent>();
+}
+
 void PlayerControllerSystem::update(ECSManager* manager){
     // get set of entities
-    set<ID>& entities = manager->getComponentEntities<CharacterComponent>();
+    set<ID>& entities = manager->getComponentEntities<PlayerControlComponent>();
     // for each entity in set
     for(ID entityID : entities){
         // update
@@ -166,30 +175,59 @@ void PlayerControllerSystem::update(ECSManager* manager){
 
 void PlayerControllerSystem::updateInput(ECSManager* manager, ID entityID){
     // get components
-    SDLDeltaTimeComponent deltaTime = manager->getComponent<SDLDeltaTimeComponent>();
-    SDLEventComponent event = manager->getComponent<SDLEventComponent>();
+    SDLDeltaTimeComponent& deltaTime = manager->getComponent<SDLDeltaTimeComponent>();
+    SDLEventComponent& event = manager->getComponent<SDLEventComponent>();
+    CharacterComponent& character = manager ->getComponent<CharacterComponent>();
 
     if(event.isDown(SDL_SCANCODE_W)){
-        updateDirection(manager, entityID, UP);
+        character.newDirection = UP;
     }
     if(event.isDown(SDL_SCANCODE_D)){
-        updateDirection(manager, entityID, RIGHT);
+        character.newDirection = RIGHT;
     }
     if(event.isDown(SDL_SCANCODE_S)){
-        updateDirection(manager, entityID, DOWN);
+        character.newDirection = DOWN;
     }
     if(event.isDown(SDL_SCANCODE_A)){
-        updateDirection(manager, entityID, LEFT);
+        character.newDirection = LEFT;
     }
 
-    CharacterComponent& character = manager->getComponent<CharacterComponent>(entityID);
+    
+    PositionComponent& pos = manager ->getComponent<PositionComponent>();
+    std::cout << "x: " << pos.x << ", y: " << pos.y << std::endl;
+};
 
-    set<DIRECTION> directions = getPossibleDirections(manager, entityID);
-    // if direction is not possible
-    if(directions.find(character.direction) == directions.end()){
-        updateDirection(manager, entityID, NONE);
+// ------- AIControllerSystem ------- //
+
+void AIControllerSystem::init(ECSManager* manager){
+    // tell manager that these components are ready
+    manager->groupEntities<AIControlComponent>();
+}
+
+void AIControllerSystem::update(ECSManager* manager){
+    // get set of entities
+    set<ID>& entities = manager->getComponentEntities<AIControlComponent>();
+    // for each entity in set
+    for(ID entityID : entities){
+        // update
+        updateInput(manager, entityID);
     }
 };
+
+void AIControllerSystem::updateInput(ECSManager* manager, ID entityID){
+    // get components
+    SDLDeltaTimeComponent& deltaTime = manager->getComponent<SDLDeltaTimeComponent>();
+    SDLEventComponent& event = manager->getComponent<SDLEventComponent>();
+    CharacterComponent& character = manager ->getComponent<CharacterComponent>();
+
+    if(event.isDown(SDL_SCANCODE_W)){
+        character.newDirection = UP;
+    }
+    if(event.isDown(SDL_SCANCODE_S)){
+        character.newDirection = DOWN;
+    }
+};
+
 
 // ------- CharacterRenderSystem ------- //
 
@@ -210,10 +248,9 @@ void CharacterRenderSystem::drawCharacter(ECSManager* manager, ID entityID){
     SDLRendererComponent& renderer = manager->getComponent<SDLRendererComponent>();
     // get relevant components
     PositionComponent& pos = manager->getComponent<PositionComponent>(entityID);
-    ScaleComponent& scale = manager->getComponent<ScaleComponent>(entityID);
-    RotationComponent& rot = manager->getComponent<RotationComponent>(entityID);
+    CharacterComponent& character = manager->getComponent<CharacterComponent>(entityID);
     // draw square
-    SDL_Rect fillRect = { (int)pos.x, (int)pos.y, (int)scale.x, (int)scale.y };
+    SDL_Rect fillRect = { (int)pos.x, (int)pos.y, (int)character.width, (int)character.height };
     SDL_SetRenderDrawColor( renderer.getRenderer(), 0xFF, 0x00, 0x00, 0xFF );        
     SDL_RenderFillRect( renderer.getRenderer(), &fillRect );
 }
